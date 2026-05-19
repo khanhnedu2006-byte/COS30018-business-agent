@@ -216,3 +216,21 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Môi trường
+venv/
+__pycache__/
+*.pyc
+.env
+
+# Yelp dataset (quá lớn)
+data/*.json
+data/*.csv
+data/chroma_db/
+
+# Debug files
+debug_screenshot.png
+debug_after_click.png
+
+# Node modules (cho React sau này)
+node_modules/
