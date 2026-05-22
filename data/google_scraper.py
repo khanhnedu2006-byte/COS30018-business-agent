@@ -133,6 +133,6 @@ def scrape_google_reviews(business_name: str, limit: int = MAX_REVIEWS_PER_RUN) 
 
 
 if __name__ == "__main__":
-    df = scrape_google_reviews("Nhậu tự do", limit=20)
+    df = scrape_google_reviews("Highland Coffee", limit=20)
     if not df.empty:
         print(df[["business_name", "stars", "text"]].head())

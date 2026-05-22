@@ -24,6 +24,7 @@ def run_analysis(
     limit: int = MAX_REVIEWS_PER_RUN,
     use_rag: bool = True,
     top_k_rag: int = 15,
+    business_id: str = None,
 ) -> dict:
     """
     Hàm chính: điều phối toàn bộ pipeline phân tích.
@@ -48,6 +49,7 @@ def run_analysis(
         business_name=business_name,
         csv_path=csv_path,
         limit=limit,
+        business_id=business_id,
     )
 
     if df_raw.empty:
