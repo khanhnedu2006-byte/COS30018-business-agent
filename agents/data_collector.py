@@ -7,28 +7,31 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import pandas as pd
 from config import AGENT_VERBOSE, MAX_REVIEWS_PER_RUN
 
-from data.yelp_loader import load_yelp_reviews
+from data.yelp_loader import load_yelp_reviews, load_reviews_by_business_id, search_businesses
 from data.google_scraper import scrape_google_reviews
 from data.csv_handler import load_from_csv
+
+
+def get_business_list(business_name: str) -> list[dict]:
+    """Trả về danh sách chi nhánh để hiển thị cho user chọn."""
+    return search_businesses(business_name)
 
 
 def collect_reviews(
     business_name: str,
     csv_path: str = None,
-    limit: int = MAX_REVIEWS_PER_RUN,
+    limit: int = None,
+    business_id: str = None,
 ) -> tuple[pd.DataFrame, str]:
     """
-    Hàm chính: thu thập reviews từ nhiều nguồn theo thứ tự ưu tiên.
-    Trả về (DataFrame, source) — source là nguồn dữ liệu đã dùng.
-
-    Thứ tự ưu tiên:
+    Thu thập reviews theo thứ tự ưu tiên:
     1. CSV upload (nếu có)
-    2. Yelp Dataset
+    2. Yelp Dataset (nếu có business_id)
     3. Google Maps scraping
     """
     print(f"🤖 Data Collector: Thu thập reviews cho '{business_name}'...")
 
-    # ── Nguồn 1: CSV upload ───────────────────────────────────────────────────
+    # ── Nguồn 1: CSV upload ───────────────────────────────────────────
     if csv_path:
         print(f"   📂 Thử nguồn 1: CSV upload ({csv_path})")
         try:
@@ -39,40 +42,46 @@ def collect_reviews(
         except Exception as e:
             print(f"   ❌ CSV lỗi: {e}")
 
-    # ── Nguồn 2: Yelp Dataset ─────────────────────────────────────────────────
+    # ── Nguồn 2: Yelp Dataset ─────────────────────────────────────────
     print(f"   📂 Thử nguồn 2: Yelp Dataset")
     try:
-        df = load_yelp_reviews(business_name, limit=limit)
+        if business_id:
+            df = load_reviews_by_business_id(
+                business_id=business_id,
+                business_name=business_name,
+                limit=limit,
+            )
+        else:
+            df = load_yelp_reviews(
+                business_name=business_name,
+                limit=limit,
+            )
+
         if not df.empty:
             print(f"   ✅ Lấy được {len(df)} reviews từ Yelp")
             return df, "yelp"
     except Exception as e:
         print(f"   ❌ Yelp lỗi: {e}")
 
-    # ── Nguồn 3: Google Maps scraping ─────────────────────────────────────────
+    # ── Nguồn 3: Google Maps ──────────────────────────────────────────
     print(f"   📂 Thử nguồn 3: Google Maps")
     try:
-        df = scrape_google_reviews(business_name, limit=limit)
+        df = scrape_google_reviews(business_name, limit=100)
         if not df.empty:
             print(f"   ✅ Lấy được {len(df)} reviews từ Google Maps")
             return df, "google"
     except Exception as e:
         print(f"   ❌ Google Maps lỗi: {e}")
 
-    # ── Không tìm thấy ────────────────────────────────────────────────────────
-    print(f"   ❌ Không tìm thấy reviews cho '{business_name}' từ bất kỳ nguồn nào")
+    print(f"   ❌ Không tìm thấy reviews từ bất kỳ nguồn nào")
     return pd.DataFrame(), "none"
 
 
 def collect_from_multiple_sources(
     business_name: str,
-    limit: int = MAX_REVIEWS_PER_RUN,
+    limit: int = None,
 ) -> tuple[pd.DataFrame, list[str]]:
-    """
-    Thu thập reviews từ TẤT CẢ các nguồn có thể rồi gộp lại.
-    Dùng khi muốn tối đa hoá số lượng reviews.
-    Trả về (DataFrame gộp, list các nguồn đã dùng).
-    """
+    """Thu thập từ TẤT CẢ nguồn rồi gộp lại."""
     print(f"🤖 Data Collector: Thu thập từ tất cả nguồn cho '{business_name}'...")
 
     all_dfs = []
@@ -91,7 +100,7 @@ def collect_from_multiple_sources(
 
     # Google Maps
     try:
-        df_google = scrape_google_reviews(business_name, limit=limit // 2)
+        df_google = scrape_google_reviews(business_name, limit=50)
         if not df_google.empty:
             df_google["source"] = "google"
             all_dfs.append(df_google)
@@ -101,10 +110,8 @@ def collect_from_multiple_sources(
         print(f"   ❌ Google: {e}")
 
     if not all_dfs:
-        print(f"   ❌ Không có reviews từ nguồn nào")
         return pd.DataFrame(), []
 
-    # Gộp và dedup
     df_combined = pd.concat(all_dfs, ignore_index=True)
     df_combined = df_combined.drop_duplicates(subset=["text"], keep="first")
 
@@ -113,11 +120,10 @@ def collect_from_multiple_sources(
 
 
 if __name__ == "__main__":
-    # Test nguồn ưu tiên
     print("=" * 50)
     print("TEST: Thu thập theo thứ tự ưu tiên")
     print("=" * 50)
     df, source = collect_reviews("McDonald's", limit=10)
     print(f"Nguồn dùng: {source}")
     if not df.empty:
-        print(df[["text", "stars"]].head(3))    
+        print(df[["text", "stars"]].head(3))
