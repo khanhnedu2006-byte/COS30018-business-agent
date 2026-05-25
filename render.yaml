@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: business-agent-backend
+    env: python
+    plan: free
+    buildCommand: |
+      pip install -r requirements.txt
+      playwright install chromium
+      playwright install-deps chromium
+    startCommand: uvicorn backend.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: GROQ_API_KEY
+        sync: false
+      - key: LLM_MODEL
+        value: llama-3.3-70b-versatile
+      - key: ENVIRONMENT
+        value: production
+      - key: LITELLM_DROP_PARAMS
+        value: "True"
+      - key: AGENT_VERBOSE
+        value: "false"
+      - key: MAX_REVIEWS_PER_RUN
+        value: "50"
