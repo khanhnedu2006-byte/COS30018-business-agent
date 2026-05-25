@@ -71,22 +71,22 @@ def analyze(request: AnalyzeRequest):
 
 @router.post("/analyze/google")
 def analyze_google(request: SearchRequest):
-    """Phân tích reviews từ Google Maps."""
+    DISABLE_SCRAPING = os.getenv("DISABLE_SCRAPING", "false").lower() == "true"
     
-    if not request.business_name.strip():
-        raise HTTPException(status_code=400, detail="Tên quán không được rỗng")
-
+    if DISABLE_SCRAPING:
+        raise HTTPException(
+            status_code=503,
+            detail="Google Maps scraping không khả dụng trên server. Vui lòng dùng Yelp Dataset hoặc upload CSV."
+        )
+    
     try:
         result = run_analysis(
             business_name=request.business_name,
             use_rag=True,
         )
-
         if result.get("error"):
             raise HTTPException(status_code=404, detail=result.get("reason"))
-
         return result
-
     except HTTPException:
         raise
     except Exception as e:
