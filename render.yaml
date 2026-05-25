@@ -3,12 +3,10 @@ services:
     name: business-agent-backend
     env: python
     plan: free
-    pythonVersion: "3.11.9"
     buildCommand: |
       pip install --upgrade pip
       pip install -r requirements.txt
-      playwright install chromium
-      playwright install-deps chromium
+      playwright install chromium --with-deps 2>/dev/null || echo "Playwright install skipped"
     startCommand: uvicorn backend.main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: GROQ_API_KEY
@@ -21,7 +19,5 @@ services:
         value: "True"
       - key: AGENT_VERBOSE
         value: "false"
-      - key: MAX_REVIEWS_PER_RUN
-        value: "50"
-      - key: PYTHON_VERSION
-        value: "3.11.9"
+      - key: DISABLE_SCRAPING
+        value: "true"
