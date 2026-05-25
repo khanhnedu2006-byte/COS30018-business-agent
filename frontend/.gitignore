@@ -1,24 +1,26 @@
-# Logs
-logs
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
+# Môi trường
+venv/
+__pycache__/
+*.pyc
+.env
 
-node_modules
-dist
-dist-ssr
-*.local
+# Data (quá lớn)
+data/*.json
+data/*.csv
+data/chroma_db/
+data/uploads/
 
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea
+# Debug
+debug_screenshot.png
+debug_after_click.png
+
+# Node
+node_modules/
+frontend/dist/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# OS
 .DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
+Thumbs.db
